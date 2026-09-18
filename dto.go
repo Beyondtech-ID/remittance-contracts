@@ -137,8 +137,13 @@ type RateFee struct {
 // FxRate applies across every channel; Fee does not, so it stays a list
 // keyed by RoutingChannel.
 type RateResponse struct {
-	OriginCountry  string         `json:"originCountry"`
-	TargetCountry  string         `json:"targetCountry"`
+	OriginCountry string `json:"originCountry"`
+	TargetCountry string `json:"targetCountry"`
+	// ServiceID is the payment method this rate was probed under (see the
+	// ServiceX constants) — echoed back so the caller can tell which
+	// service a given fee list belongs to without having to remember what
+	// it asked for.
+	ServiceID      string         `json:"serviceId,omitempty"`
 	Currency       string         `json:"currency"`
 	FxRate         float64        `json:"fxRate"`
 	ExpirationDate string         `json:"expirationDate"`

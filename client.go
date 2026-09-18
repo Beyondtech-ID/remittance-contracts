@@ -164,10 +164,19 @@ func (c *Client) Quote(ctx context.Context, req QuoteRequest) (*QuoteResponse, e
 	return &out, nil
 }
 
-func (c *Client) GetRates(ctx context.Context, originCountry, targetCountry string) (*RateResponse, error) {
+// GetRates looks up a corridor's reference fx rate/fee. serviceID selects
+// which Topremit payment method to probe (see the ServiceX constants below)
+// — different services aren't just different delivery speeds, some
+// corridors only exist under a specific service (e.g. China only quotes
+// under ServiceWeChatPay/ServiceAlipay, never ServiceBankAccount). Pass ""
+// to let the backbone use its own default.
+func (c *Client) GetRates(ctx context.Context, originCountry, targetCountry, serviceID string) (*RateResponse, error) {
 	q := url.Values{}
 	q.Set("originCountry", originCountry)
 	q.Set("targetCountry", targetCountry)
+	if serviceID != "" {
+		q.Set("serviceId", serviceID)
+	}
 	var out RateResponse
 	if err := c.do(ctx, http.MethodGet, PathRates+"?"+q.Encode(), nil, &out); err != nil {
 		return nil, err
