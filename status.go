@@ -17,10 +17,19 @@ const (
 	OrderStatusExecuting OrderStatus = "EXECUTING"
 	// OrderStatusSuccess: terminal, money delivered.
 	OrderStatusSuccess OrderStatus = "SUCCESS"
-	// OrderStatusFailed: terminal, order did not complete (rejected,
-	// expired, cancelled, refunded — the backbone's own status already
-	// resolved these to a final failure).
+	// OrderStatusFailed: terminal, generic failure (rejected, refunded —
+	// anything that isn't specifically OrderStatusCancelled or
+	// OrderStatusExpired below).
 	OrderStatusFailed OrderStatus = "FAILED"
+	// OrderStatusCancelled: terminal — either core's own checker rejected
+	// it before submit, or the provider confirmed a cancellation.
+	// Core-api is expected to tell the two apart via source/reason on its
+	// own side; this value only means "did not go through, cancelled".
+	OrderStatusCancelled OrderStatus = "CANCELLED"
+	// OrderStatusExpired: terminal — core's approval window lapsed, the
+	// quote went invalid before the first submit attempt, or the provider
+	// itself reports an expiry per its own contract terms.
+	OrderStatusExpired OrderStatus = "EXPIRED"
 	// OrderStatusNeedsManualReview: non-terminal, but NOT auto-retried by
 	// the backbone — the outcome at the provider is ambiguous (e.g. a
 	// submit call failed after the provider may have already accepted it)
@@ -28,6 +37,17 @@ const (
 	// this order.
 	OrderStatusNeedsManualReview OrderStatus = "NEEDS_MANUAL_REVIEW"
 )
+
+// IsTerminal reports whether this status is a final outcome — no further
+// status transition or callback should be expected after one of these.
+func (s OrderStatus) IsTerminal() bool {
+	switch s {
+	case OrderStatusSuccess, OrderStatusFailed, OrderStatusCancelled, OrderStatusExpired:
+		return true
+	default:
+		return false
+	}
+}
 
 // CallbackStatus tracks whether a backbone has successfully delivered a
 // StatusCallback to core-api yet.
